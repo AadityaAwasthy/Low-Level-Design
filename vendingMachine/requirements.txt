@@ -1,0 +1,28 @@
+The vending machine should support multiple products with different prices and quantities.
+The machine should accept coins and notes of different denominations.
+The machine should dispense the selected product and return change if necessary.
+The machine should keep track of the available products and their quantities.
+The machine should handle multiple transactions concurrently and ensure data consistency.
+The machine should provide an interface for restocking products and collecting money.
+The machine should handle exceptional scenarios, such as insufficient funds or out-of-stock products.
+
+Nouns to make objects from:
+1. vending machine -> Singleton Design.
+2. products
+3. coins and notes
+
+Verbs to make methods out of:
+1. Accept coins
+2. Dispense products and change
+3. keep track of availability.
+4. maintain consistency in concurrent situations.
+5. Restock products
+6. Collect money.
+7. Handle exceptions
+
+
+Addons for later
+1. Add destructor in state so that we cleanup manually after we are done with it.
+2. Length of the generator ? where to define that
+3. convert currentState to reference ?
+

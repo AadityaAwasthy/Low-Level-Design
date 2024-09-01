@@ -67,6 +67,11 @@ class Answer {
             this -> voteBank = Vote();
         }
 
+        //Helper Methods
+        void print() {
+            cout << "(" << id << ")" << "A: " << answer << endl;
+        }
+
 
         //Getter methods
         string getAnswer() {return answer;}
@@ -94,9 +99,21 @@ class Question {
             this -> voteBank = Vote();
         }
 
+        void postAnswer(Answer *answer) {
+            unsigned int answerId = answer -> getId();
+
+            idToAnswer[answerId] = answer;
+        }
+
         void print() {
             printf("(%d) (%d, %d)\n", id, voteBank.getUpVotes(), voteBank.getDownVotes());
-            cout << question << endl;
+            cout << "Q. " << question << endl;
+
+            for(auto &answer: idToAnswer) {
+                Answer *currentAnswer = answer.second;
+                
+                currentAnswer -> print();
+            }
 
             return;
         }
@@ -130,6 +147,7 @@ class StackOverflow{
 
         User * createUser(string name);
         void postQuestion(Question *question);
+        void postAnswer(unsigned int questionId, Answer *answer);
 
         //Helper methods
         void printQuestionsAndAnswers ();
@@ -137,7 +155,6 @@ class StackOverflow{
         //Getter Methods
         User * getUser(int id); 
         Question * getQuestion(int id);
-        Answer * getAnswer(int id);
 };
 
 class User {
@@ -164,6 +181,16 @@ class User {
 
             idToQuestion[newQuestionId] = newQuestion;
             system.postQuestion(newQuestion);
+        }
+
+        void postAnswer(unsigned int questionId, string answer) {
+            Answer *newAnswer = new Answer(id, answer);
+            unsigned int newAnswerId = newAnswer -> getId();
+
+            idToAnswer[newAnswerId] = newAnswer;
+            system.postAnswer(questionId, newAnswer);
+
+            return;
         }
 
         // Helper methods
@@ -200,6 +227,13 @@ void StackOverflow::postQuestion(Question *question) {
     return;
 }
 
+void StackOverflow::postAnswer(unsigned int questionId, Answer *answer){
+    Question *question = getQuestion(questionId);
+    question -> postAnswer(answer);
+
+    return;
+}
+
 void StackOverflow::printQuestionsAndAnswers() {
     for(auto &question: idToQuestion) {
         Question *currentQuestion = question.second;
@@ -232,9 +266,16 @@ int main() {
     StackOverflow& system = StackOverflow::getInstance();
 
     User *user1 = system.createUser("Aaditya");
+    User *user2 = system.createUser("Manas");
     user1 -> postQuestion("How do you work with classes in cpp?");
     user1 -> postQuestion("How to prepare for placements?");
     user1 -> postQuestion("How to learn DSA?");
+    user2 -> postQuestion("How to fuck?");
+
+
+
+    user1 -> postAnswer(1, "Use chatGpt");
+    user1 -> postAnswer(1, "Trying reading the documentation");
 
     system.printQuestionsAndAnswers();
 

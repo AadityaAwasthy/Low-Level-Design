@@ -1,5 +1,4 @@
 #include<bits/stdc++.h>
-#include <cstdio>
 using namespace std;
 
 class Vote {
@@ -11,6 +10,10 @@ class Vote {
         Vote() {
             upVotes = 0;
             downVotes = 0;
+        }
+
+        void print() {
+            printf("(%d, %d)\n", getUpVotes(), getDownVotes());
         }
 
         void upVote() {
@@ -42,6 +45,12 @@ class Comment {
             this -> voteBank = Vote();
         }
 
+
+        void print() {
+            cout << "(" << id << ")" << "C: " << comment << endl;
+        }
+
+
         //Getter Methods
         string getComment() {return comment;}
         unsigned int getUserid() {return userId;}
@@ -51,7 +60,12 @@ class Comment {
         unsigned int getNextId() {return ++id_generator;}
 };
 
-class Answer {
+class Commentable {
+    public:
+        virtual void postComment(Comment *) = 0;
+};
+
+class Answer : public Commentable{
     private:
         static unsigned int id_generator;
         unsigned int id;
@@ -68,9 +82,18 @@ class Answer {
             this -> voteBank = Vote();
         }
 
+        void postComment(Comment *comment) {
+            unsigned int commentId = comment -> getId();
+            idToComment[commentId] = comment;
+        }
+
         //Helper Methods
         void print() {
             cout << "(" << id << ")" << "A: " << answer << endl;
+            
+            for(auto &comment: idToComment) {
+                comment.second -> print();
+            }
         }
 
 
@@ -83,7 +106,7 @@ class Answer {
         unsigned int getNextId() {return ++id_generator;}
 };
 
-class Question {
+class Question : public Commentable {
     private:
         static unsigned int id_generator;
         unsigned int id;
@@ -103,18 +126,24 @@ class Question {
 
         void postAnswer(Answer *answer) {
             unsigned int answerId = answer -> getId();
-
             idToAnswer[answerId] = answer;
         }
 
+        void postComment(Comment *comment) {
+            unsigned int commentId = comment -> getId();
+            idToComment[commentId] = comment;
+        }
+
         void print() {
-            printf("(%d) (%d, %d)\n", id, voteBank.getUpVotes(), voteBank.getDownVotes());
-            cout << "Q. " << question << endl;
+            voteBank.print();
+            cout << "(" << id << ")" << "Q. " << question << endl;
+
+            for(auto &comment: idToComment) {
+                comment.second -> print();
+            }
 
             for(auto &answer: idToAnswer) {
-                Answer *currentAnswer = answer.second;
-                
-                currentAnswer -> print();
+                answer.second -> print();
             }
 
             return;
@@ -139,6 +168,7 @@ class StackOverflow{
         map<unsigned int, User *> idToUser;
         map<unsigned int, Question *> idToQuestion;
         map<unsigned int, Answer *> idToAnswer;
+        map<unsigned int, Comment *> idToComment;
 
     public:
         // Singleton class
@@ -151,6 +181,7 @@ class StackOverflow{
         User * createUser(string name);
         Question * postQuestion(User *user, string question);
         Answer * postAnswer(User *user, Question *question, string answer);
+        Comment *postComment(User *user, Commentable *subject, string comment);
 
         //Helper methods
         void printQuestionsAndAnswers ();
@@ -181,16 +212,17 @@ class User {
 
         void postQuestion(Question *question) {
             unsigned int questionId = question -> getId();
-
             idToQuestion[questionId] = question;
-            return;
         }
 
         void postAnswer(Answer *answer) {
             unsigned int answerId = answer -> getId();
-
             idToAnswer[answerId] = answer;
-            return;
+        }
+
+        void postComment(Comment *comment) {
+            unsigned int commentId = comment -> getId();
+            idToComment[commentId] = comment;
         }
 
         // Helper methods
@@ -241,11 +273,21 @@ Answer * StackOverflow::postAnswer(User *user, Question *question, string answer
     return newAnswer;
 }
 
+Comment * StackOverflow::postComment(User *user, Commentable *subject, string comment) {
+    Comment *newComment = new Comment(user -> getId(), comment);
+    unsigned int newCommentId = newComment -> getId();
+
+    user -> postComment(newComment);
+    subject -> postComment(newComment);
+
+    idToComment[newCommentId] = newComment;
+
+    return newComment;
+}
+
 void StackOverflow::printQuestionsAndAnswers() {
     for(auto &question: idToQuestion) {
-        Question *currentQuestion = question.second;
-
-        currentQuestion -> print();
+        question.second -> print();
         cout << endl;
     }
 
@@ -274,6 +316,7 @@ int main() {
 
     User *user1 = system.createUser("Aaditya");
     User *user2 = system.createUser("Manas");
+    User *user3 = system.createUser("Rana");
 
     Question *ques1 = system.postQuestion(user1, "What is polymorphism in cpp");
     Question *ques2 = system.postQuestion(user2, "What is encapsulation");
@@ -281,6 +324,9 @@ int main() {
     Answer *ans1 = system.postAnswer(user2, ques1, "Ability of an object to take various forms");
 
     Answer *ans2 = system.postAnswer(user1, ques2, "Confing similar data and methods in a class");
+
+    Comment *comment1 = system.postComment(user3, ques1, "Valid question");
+    Comment *comment2 = system.postComment(user3, ans2, "Confining ki spelling galat hai chutiye");
 
     system.printQuestionsAndAnswers();
 

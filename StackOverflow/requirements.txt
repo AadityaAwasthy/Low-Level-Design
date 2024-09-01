@@ -1,0 +1,42 @@
+1.Users can post questions, answer questions, and comment on questions and answers.
+
+2.Users can vote on questions and answers.
+
+3.Questions should have tags associated with them.
+
+4.Users can search for questions based on keywords, tags, or user profiles.
+
+5.The system should assign reputation score to users based on their activity and the quality of their contributions.
+
+6.The system should handle concurrent access and ensure data consistency.
+
+
+Nouns found ->
+1.User 
+    1.1 Repuation score.
+
+2.Manager (StackOverflow)
+    1. Question 
+        1.1 Tags
+        1.2 Keywords 
+        1.3 Answers
+        1.4 Comment
+
+Actors ->
+1. User Interacts with StackOverflow.
+
+Verbs ->
+1.User 
+    1.1 Post questions
+    1.2 Answer questions
+    1.3 Comment on Questions and answers
+    1.4 Vote on Question and answers
+
+2.Manager 
+    2.1 Search for Questions based on keywords, tags, user profiles
+    2.2 Repuation Score management based on activity.
+
+
+To-Dos
+1.Make the id Generator Code abstract !
+2.Might Need to remove answer map from the StackOverflow class

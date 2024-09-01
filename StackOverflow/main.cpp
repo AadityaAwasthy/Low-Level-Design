@@ -58,6 +58,7 @@ class Answer {
         unsigned int userId;
         string answer;
         Vote voteBank;
+        map<unsigned int, Comment *> idToComment;
 
     public:
         Answer(unsigned int userId,  string answer) {
@@ -90,6 +91,7 @@ class Question {
         string question;
         Vote voteBank;
         map<unsigned int, Answer *> idToAnswer;
+        map<unsigned int, Comment *> idToComment;
 
     public:
         Question(unsigned int userId,  string question) {
@@ -136,6 +138,7 @@ class StackOverflow{
         mutex mtx;
         map<unsigned int, User *> idToUser;
         map<unsigned int, Question *> idToQuestion;
+        map<unsigned int, Answer *> idToAnswer;
 
     public:
         // Singleton class
@@ -146,8 +149,8 @@ class StackOverflow{
         }
 
         User * createUser(string name);
-        void postQuestion(Question *question);
-        void postAnswer(unsigned int questionId, Answer *answer);
+        Question * postQuestion(User *user, string question);
+        Answer * postAnswer(User *user, Question *question, string answer);
 
         //Helper methods
         void printQuestionsAndAnswers ();
@@ -167,6 +170,7 @@ class User {
 
         map<unsigned int, Question *> idToQuestion;
         map<unsigned int, Answer *> idToAnswer;
+        map<unsigned int, Comment *> idToComment;
 
     public:
         User(string name, StackOverflow& system) : system(system) {
@@ -175,21 +179,17 @@ class User {
             this -> reputationScore = 0;
         }
 
-        void postQuestion(string question) {
-            Question *newQuestion = new Question(id, question);
-            unsigned int newQuestionId = newQuestion->getId();
+        void postQuestion(Question *question) {
+            unsigned int questionId = question -> getId();
 
-            idToQuestion[newQuestionId] = newQuestion;
-            system.postQuestion(newQuestion);
+            idToQuestion[questionId] = question;
+            return;
         }
 
-        void postAnswer(unsigned int questionId, string answer) {
-            Answer *newAnswer = new Answer(id, answer);
-            unsigned int newAnswerId = newAnswer -> getId();
+        void postAnswer(Answer *answer) {
+            unsigned int answerId = answer -> getId();
 
-            idToAnswer[newAnswerId] = newAnswer;
-            system.postAnswer(questionId, newAnswer);
-
+            idToAnswer[answerId] = answer;
             return;
         }
 
@@ -220,18 +220,25 @@ User * StackOverflow::createUser(string name) {
     return newUser;
 }
 
-void StackOverflow::postQuestion(Question *question) {
-    unsigned int questionId = question -> getId();
-    idToQuestion[questionId] = question;
+Question * StackOverflow::postQuestion(User *user, string question) {
+    Question *newQuestion = new Question(user -> getId(), question);
+    unsigned int newQuestionId = newQuestion -> getId();
 
-    return;
+    user -> postQuestion(newQuestion);
+    idToQuestion[newQuestionId] = newQuestion;
+
+    return newQuestion;
 }
 
-void StackOverflow::postAnswer(unsigned int questionId, Answer *answer){
-    Question *question = getQuestion(questionId);
-    question -> postAnswer(answer);
+Answer * StackOverflow::postAnswer(User *user, Question *question, string answer){
+    Answer *newAnswer = new Answer(user -> getId(), answer);
+    unsigned int newAnswerId = newAnswer -> getId();
 
-    return;
+    user -> postAnswer(newAnswer);
+    question -> postAnswer(newAnswer);
+
+    idToAnswer[newAnswerId] = newAnswer;
+    return newAnswer;
 }
 
 void StackOverflow::printQuestionsAndAnswers() {
@@ -267,15 +274,13 @@ int main() {
 
     User *user1 = system.createUser("Aaditya");
     User *user2 = system.createUser("Manas");
-    user1 -> postQuestion("How do you work with classes in cpp?");
-    user1 -> postQuestion("How to prepare for placements?");
-    user1 -> postQuestion("How to learn DSA?");
-    user2 -> postQuestion("How to fuck?");
 
+    Question *ques1 = system.postQuestion(user1, "What is polymorphism in cpp");
+    Question *ques2 = system.postQuestion(user2, "What is encapsulation");
 
+    Answer *ans1 = system.postAnswer(user2, ques1, "Ability of an object to take various forms");
 
-    user1 -> postAnswer(1, "Use chatGpt");
-    user1 -> postAnswer(1, "Trying reading the documentation");
+    Answer *ans2 = system.postAnswer(user1, ques2, "Confing similar data and methods in a class");
 
     system.printQuestionsAndAnswers();
 

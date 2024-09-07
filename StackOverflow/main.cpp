@@ -1,50 +1,52 @@
 #include<bits/stdc++.h>
 using namespace std;
 
+class User;
+
 class Vote {
     private:
-        unsigned int upVotes;
-        unsigned int downVotes;
+        static unsigned int id_generator;
+        unsigned int id;
+        unsigned int userId;
+        int value;
 
     public:
-        Vote() {
-            upVotes = 0;
-            downVotes = 0;
+        Vote(unsigned int userId, int value) {
+            this -> userId = userId;
+            this -> value = value;
+            this -> id = getNextId();
         }
 
-        void print() {
-            printf("(%d, %d)\n", getUpVotes(), getDownVotes());
-        }
-
-        void upVote() {
-            (this -> upVotes)++;
-        }
-
-        void downVote() {
-            (this -> downVotes)++;
-        }
-
-
-        unsigned int getUpVotes() {return upVotes;}
-        unsigned int getDownVotes() {return downVotes;}
+        unsigned int getUserid() {return userId;}
+        unsigned int getId() {return id;}
+        unsigned int getNextId() {return ++id_generator;}
+        int getValue() {return value;}
 };
 
-class Comment {
+class Votable {
+    public:
+        virtual void postVote(Vote *) = 0;
+};
+
+class Comment : public Votable {
     private:
         static unsigned int id_generator;
         unsigned int id;
         unsigned int userId;
         string comment;
-        Vote voteBank;
+        map<unsigned int , Vote *> idToVote;
 
     public:
         Comment(unsigned int userId,  string comment) {
             this -> comment = comment;
             this -> id = getNextId();
             this ->userId = userId;
-            this -> voteBank = Vote();
         }
 
+        void postVote(Vote *vote) {
+            unsigned int voteId = vote -> getId();
+            idToVote[voteId] = vote;
+        }
 
         void print() {
             cout << "(" << id << ")" << "C: " << comment << endl;
@@ -55,8 +57,6 @@ class Comment {
         string getComment() {return comment;}
         unsigned int getUserid() {return userId;}
         unsigned int getId() {return id;}
-        unsigned int getUpVotes() {return voteBank.getUpVotes();}
-        unsigned int getDownVotes() {return voteBank.getDownVotes();}
         unsigned int getNextId() {return ++id_generator;}
 };
 
@@ -65,26 +65,30 @@ class Commentable {
         virtual void postComment(Comment *) = 0;
 };
 
-class Answer : public Commentable{
+class Answer : public Commentable, public Votable{
     private:
         static unsigned int id_generator;
         unsigned int id;
         unsigned int userId;
         string answer;
-        Vote voteBank;
         map<unsigned int, Comment *> idToComment;
+        map<unsigned int, Vote *> idToVote;
 
     public:
         Answer(unsigned int userId,  string answer) {
             this -> answer = answer;
             this -> id = getNextId();
             this ->userId = userId;
-            this -> voteBank = Vote();
         }
 
         void postComment(Comment *comment) {
             unsigned int commentId = comment -> getId();
             idToComment[commentId] = comment;
+        }
+
+        void postVote(Vote *vote) {
+            unsigned int voteId = vote -> getId();
+            idToVote[voteId] = vote;
         }
 
         //Helper Methods
@@ -101,27 +105,26 @@ class Answer : public Commentable{
         string getAnswer() {return answer;}
         unsigned int getUserid() {return userId;}
         unsigned int getId() {return id;}
-        unsigned int getUpVotes() {return voteBank.getUpVotes();}
-        unsigned int getDownVotes() {return voteBank.getDownVotes();}
+        // unsigned int getUpVotes() {return voteBank.getUpVotes();}
+        // unsigned int getDownVotes() {return voteBank.getDownVotes();}
         unsigned int getNextId() {return ++id_generator;}
 };
 
-class Question : public Commentable {
+class Question : public Commentable, public Votable {
     private:
         static unsigned int id_generator;
         unsigned int id;
         unsigned int userId;
         string question;
-        Vote voteBank;
         map<unsigned int, Answer *> idToAnswer;
         map<unsigned int, Comment *> idToComment;
+        map<unsigned int, Vote *> idToVote;
 
     public:
         Question(unsigned int userId,  string question) {
             this -> question = question;
             this -> id = getNextId();
             this ->userId = userId;
-            this -> voteBank = Vote();
         }
 
         void postAnswer(Answer *answer) {
@@ -134,8 +137,12 @@ class Question : public Commentable {
             idToComment[commentId] = comment;
         }
 
+        void postVote(Vote *vote) {
+            unsigned int voteId = vote -> getId();
+            idToVote[voteId] = vote;
+        }
+
         void print() {
-            voteBank.print();
             cout << "(" << id << ")" << "Q. " << question << endl;
 
             for(auto &comment: idToComment) {
@@ -154,13 +161,10 @@ class Question : public Commentable {
         string getQuestion() {return question;}
         unsigned int getUserid() {return userId;}
         unsigned int getId() {return id;}
-        unsigned int getUpVotes() {return voteBank.getUpVotes();}
-        unsigned int getDownVotes() {return voteBank.getDownVotes();}
         unsigned int getNextId() {return ++id_generator;}
         Answer * getAnswer(int id) {return idToAnswer[id];}
 };
 
-class User;
 
 class StackOverflow{
     private:
@@ -182,6 +186,8 @@ class StackOverflow{
         Question * postQuestion(User *user, string question);
         Answer * postAnswer(User *user, Question *question, string answer);
         Comment *postComment(User *user, Commentable *subject, string comment);
+        Vote *postVote(User *user, Votable *subject, int value);
+        void upVote(User *user, Votable *subject);
 
         //Helper methods
         void printQuestionsAndAnswers ();
@@ -202,6 +208,7 @@ class User {
         map<unsigned int, Question *> idToQuestion;
         map<unsigned int, Answer *> idToAnswer;
         map<unsigned int, Comment *> idToComment;
+        map<unsigned int, Vote *> idToVote;
 
     public:
         User(string name, StackOverflow& system) : system(system) {
@@ -223,6 +230,11 @@ class User {
         void postComment(Comment *comment) {
             unsigned int commentId = comment -> getId();
             idToComment[commentId] = comment;
+        }
+
+        void postVote(Vote *vote) {
+            unsigned int voteId = vote -> getId();
+            idToVote[voteId] = vote;
         }
 
         // Helper methods
@@ -285,6 +297,16 @@ Comment * StackOverflow::postComment(User *user, Commentable *subject, string co
     return newComment;
 }
 
+Vote * StackOverflow::postVote(User *user, Votable *subject, int value) {
+    Vote *newVote = new Vote(user ->getId(), value);
+    unsigned int newVoteId = newVote -> getId();
+
+    user -> postVote(newVote);
+    subject -> postVote(newVote);
+
+    return newVote;
+}
+
 void StackOverflow::printQuestionsAndAnswers() {
     for(auto &question: idToQuestion) {
         question.second -> print();
@@ -308,6 +330,7 @@ unsigned int User::id_generator = 0;
 unsigned int Question::id_generator = 0;
 unsigned int Answer::id_generator = 0;
 unsigned int Comment::id_generator = 0;
+unsigned int Vote::id_generator = 0;
 
 
 //Driver code

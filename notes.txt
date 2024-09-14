@@ -1,0 +1,15 @@
+1. OO Principles
+    1.1 Encapsulate what varies.
+    1.2 Code to an interface rather than an implementation.
+    1.3 Each class should have one reason to change.
+    1.4 Classes are about behavior and functionality.
+
+2. Design Principles
+    2.1 Open-Closed Principle. -> Open for extension but closed for modifications.
+    2.2 Don't Repeat Yourself -> Avoid duplicate code by abstracting out things that are common and placing them in a single location
+    2.3 Single Responsibility Principle -> Every object should have one single responsibility and all the object's services should be focused on carrying out that single resp.
+        The __ __ itself.
+    2.4 The Liskov Substitution Principle -> Subtypes must be substitutable for their base types.
+        2.4.1 Inheritance must be checked, bad inheritance -> delegation (no change in behavior).
+        2.4.1 When you want the behavior to change (cannot happen in delegation) then try composition eg.map to certain interface now we can multiple implementations that
+              change the behavior of our object.
